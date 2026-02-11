@@ -4,13 +4,11 @@ import random
 import os
 
 def run():
-    # Coleta as chaves
     api_key = os.getenv("API_KEY")
     api_secret = os.getenv("API_SECRET")
     access_token = os.getenv("ACCESS_TOKEN")
     access_token_secret = os.getenv("ACCESS_TOKEN_SECRET")
 
-    # Configuração focada 100% na API V2 (Plano Free atual)
     client = tweepy.Client(
         consumer_key=api_key,
         consumer_secret=api_secret,
@@ -18,19 +16,24 @@ def run():
         access_token_secret=access_token_secret
     )
 
-    # Carrega as cartas
     with open('cartas.json', 'r', encoding='utf-8') as f:
         cartas = json.load(f)
     
     escolha = random.choice(cartas)
-    texto = f"{escolha['trecho']}\n\n— {escolha['autor']}, {escolha['data']}"
+    
+    # Tentamos pegar o conteúdo, não importa se o nome é 'trecho', 'texto' ou 'conteudo'
+    conteudo = escolha.get('trecho') or escolha.get('texto') or escolha.get('conteudo')
+    autor = escolha.get('autor', 'Virginia/Vita')
+    data = escolha.get('data', 'S/D')
 
-    # O segredo para o plano Free: usar user_auth=True
+    post_final = f"{conteudo}\n\n— {autor}, {data}"
+
     try:
-        response = client.create_tweet(text=texto, user_auth=True)
+        # O user_auth=True é o que resolveu o problema do pagamento!
+        response = client.create_tweet(text=post_final, user_auth=True)
         print(f"Sucesso! Tweet enviado.")
     except Exception as e:
-        print(f"Erro detalhado: {e}")
+        print(f"Erro ao postar: {e}")
         raise e
 
 if __name__ == "__main__":
